@@ -1,17 +1,74 @@
+import math
+
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 import time
+
+from numpy.random import randint
 from selenium import webdriver
+from selenium.common import NoSuchElementException
+from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
-# Set up Chrome webdriver (make sure to provide the path to your chromedriver.exe)
-chrome_path = "C:/Windows/chromedriver.exe"
-driver = webdriver.Chrome(executable_path=chrome_path)
 
-base_url = 'https://www.indeed.com'
-start_path = '/jobs'
-start_url = base_url + start_path
+def main():
+    # Set up Chrome webdriver (make sure to provide the path to your chromedriver.exe)
+    chrome_path = "C:/Windows/chromedriver.exe"
+    driver = webdriver.Chrome()
+
+    title = input("Enter job title (ex: data scientist): ")
+    location = input("Enter your zipcode or 'remote': ")
+
+    if location.lower() == 'remote':
+        distance = 'remote'
+    else:
+        distance = get_distance()
+
+    salary = get_min_salary()
+
+    # Build the Indeed search URL
+    search_url = 'https://www.indeed.com/jobs?q={}&l={}&radius={}&minSalary={}&filter=0&sort=date&start={}'
+    driver.get(search_url.format(title, location, distance, salary, 0))
+    print("Search URL:", search_url.format(title, location, distance, salary, 0))
+    job_count = driver.find_element(By.CLASS_NAME, 'jobsearch-JobCountAndSortPane-jobCount').text
+    print("Job Count:", job_count)
+    # Max number of pages for this search
+    max_pages = math.ceil(int(job_count.split(' ')[0]) / 15)
+    print("Max Pages:", max_pages)
+    job_list = []
+
+    for i in range(0, max_pages):
+        driver.get(search_url.format(title, location, distance, salary, i * 10))
+
+        try:
+
+            # Use WebDriverWait to wait for the job results to be present
+            job_page = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.ID, "mosaic-jobResults"))
+            )
+            jobs = job_page.find_elements(By.CLASS_NAME, "job_seen_beacon")
+
+            for job in jobs:
+                try:
+                    job_title = job.find_element(By.CLASS_NAME, "jobTitle")
+                    # company_name = job.find_element(By.CLASS_NAME, "companyName").text
+                    # company_location = job.find_element(By.CLASS_NAME, "companyLocation").text
+                    date = job.find_element(By.CLASS_NAME, "date").text
+                    #salary_snippet = job.find_element(By.CLASS_NAME, "salary-snippet-container").text
+
+                    job_list.append([job_title.text, job_title.find_element(By.CSS_SELECTOR, "a").get_attribute("href"),
+                                    date])
+
+                except NoSuchElementException as e:
+                    print(f"Error extracting job details: {e}")
+
+        except NoSuchElementException as e:
+            print(f"Error finding job page: {e}")
+
+    print(job_list[0:2])
 
 
 def get_distance():
@@ -32,55 +89,4 @@ def get_min_salary():
             print("Invalid input. Please enter a valid salary.")
 
 
-title = input("Enter job title (ex: data scientist): ")
-location = input("Enter your zipcode or 'remote': ")
-
-if location.lower() == 'remote':
-    distance = 'remote'
-else:
-    distance = get_distance()
-
-salary = get_min_salary()
-
-# Build the Indeed search URL
-search_params = f'?q={title.replace(" ", "+")}&l={location.replace(" ", "+")}&radius={distance}&minSalary={salary}'
-search_url = base_url + start_path + search_params
-
-# Open the Indeed search page using Selenium
-driver.get(search_url)
-
-# Give the page some time to load
-time.sleep(5)
-
-# Get the page source after it has loaded
-page_source = driver.page_source
-
-# Close the browser
-driver.quit()
-
-# Parse the HTML content
-soup = BeautifulSoup(page_source, 'html.parser')
-
-# Extract job listings
-job_listings = soup.select(".jobsearch-SerpJobCard")
-
-for job_listing in job_listings:
-    # Extract job details for each listing
-    job_title = job_listing.select_one(".title a").get_text(strip=True)
-    company_name = job_listing.select_one(".company span").get_text(strip=True)
-    location = job_listing.select_one(".location span").get_text(strip=True)
-    salary = job_listing.select_one(".salaryText").get_text(strip=True)
-    job_type = job_listing.select_one(".jobType span").get_text(strip=True)
-
-    # Output the results for each listing
-    print("Job Title:", job_title)
-    print("Company:", company_name)
-    print("Location:", location)
-    print("Salary:", salary)
-    print("Job Type:", job_type)
-    print("\n")  # Add a newline between listings
-
-    # Add a delay between requests to avoid being blocked
-    time.sleep(2)
-
-# Extract other job details as needed
+main()
