@@ -1,17 +1,13 @@
 import math
-
-import requests
-from bs4 import BeautifulSoup
 import pandas as pd
-import time
 
-from numpy.random import randint
 from selenium import webdriver
 from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import openpyxl
 
 
 def main():
@@ -21,6 +17,8 @@ def main():
 
     title = input("Enter job title (ex: data scientist): ")
     location = input("Enter your zipcode or 'remote': ")
+
+    wait = WebDriverWait(driver, 10)
 
     if location.lower() == 'remote':
         distance = 'remote'
@@ -46,7 +44,7 @@ def main():
         try:
 
             # Use WebDriverWait to wait for the job results to be present
-            job_page = WebDriverWait(driver, 10).until(
+            job_page = wait.until(
                 EC.presence_of_element_located((By.ID, "mosaic-jobResults"))
             )
             jobs = job_page.find_elements(By.CLASS_NAME, "job_seen_beacon")
@@ -54,22 +52,64 @@ def main():
             for job in jobs:
                 try:
                     job_title = job.find_element(By.CLASS_NAME, "jobTitle")
-                    # company_name = job.find_element(By.CLASS_NAME, "companyName").text
-                    # company_location = job.find_element(By.CLASS_NAME, "companyLocation").text
-                    date = job.find_element(By.CLASS_NAME, "date").text
-                    #salary_snippet = job.find_element(By.CLASS_NAME, "salary-snippet-container").text
 
-                    job_list.append([job_title.text, job_title.find_element(By.CSS_SELECTOR, "a").get_attribute("href"),
-                                    date])
+                    # Locate company name with CSS Selector
+                    try:
+                        # Locate the company name element using data-testid
+                        company_name_element = wait.until(
+                            EC.presence_of_element_located((By.CSS_SELECTOR, '[data-testid="company-name"]'))
+                        )
+
+                        # Get the text of the company name
+                        company_name = company_name_element.text
+                    except NoSuchElementException:
+                        company_name = "N/A"
+
+                    try:
+                        # Locate the company location element using data-testid
+                        company_location_element = wait.until(
+                            EC.presence_of_element_located((By.CSS_SELECTOR, '[data-testid="text-location"]'))
+                        )
+
+                        # Get the text of the company location
+                        company_location = company_location_element.text
+                    except NoSuchElementException:
+                        company_location = "N/A"
+
+                    try:
+                        date = job.find_element(By.CLASS_NAME, "date").text
+                    except NoSuchElementException:
+                        date = "N/A"
+
+                    try:
+                        # Get the text of the salary snippet
+                        salary_snippet = job.find_element(By.CLASS_NAME, "salary-snippet-container").text
+                    except NoSuchElementException:
+                        salary_snippet = "N/A"
+
+                    job_list.append([job_title.text, company_name,
+                                     company_location, salary_snippet, date, job_title.find_element(By.CSS_SELECTOR, "a").get_attribute("href")])
 
                 except NoSuchElementException as e:
-                    print(f"Error extracting job details: {e}")
+                    print(f"Error finding job details: {e}")
 
         except NoSuchElementException as e:
             print(f"Error finding job page: {e}")
 
     print(job_list[0:2])
 
+    return job_list
+
+# Export to an excel
+def export_excel(jobs):
+    columns = ["Job title", "Company Name", "Location", "Salary", "Date", "Link"]
+    df = pd.DataFrame(jobs, columns= columns)
+
+    # Specify the output Excel file path
+    excel_file_path = "output_jobs.xlsx"
+    df.to_excel(excel_file_path, index = False)
+
+    print(f"Scraped data has been saved to {excel_file_path}")
 
 def get_distance():
     while True:
@@ -88,5 +128,6 @@ def get_min_salary():
         else:
             print("Invalid input. Please enter a valid salary.")
 
-
-main()
+# Call the main function and pass the job_list to export_excel
+job_list = main()
+export_excel(job_list)
