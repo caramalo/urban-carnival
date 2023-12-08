@@ -34,11 +34,16 @@ Before running the script, make sure you have the following installed:
 
    ```bash
    python your_script_name.py
-2. Input the job title, location, and other details as prompted.
+2. Input the job title, location, and other details as prompted.![image](https://github.com/caramalo/urban-carnival/assets/30882646/6f926f78-04c6-49c9-884e-68befb4d6820)
 
-3. Wait for the script to scrape job listings.
 
-4. Once completed, the script will generate an Excel file (output_jobs.xlsx) containing the scraped data.
+
+3. Wait for the script to scrape job listings.![image](https://github.com/caramalo/urban-carnival/assets/30882646/60ada541-efad-4e7a-bca2-18a2b0d44fa3)
+
+
+
+4. Once completed, the script will generate an Excel file (output_jobs.xlsx) containing the scraped data.![image](https://github.com/caramalo/urban-carnival/assets/30882646/fc90e23b-ae6e-4f3e-a039-4e64b78cf5ed)
+
 
 ## Notes
 - Ensure that your internet connection is stable during execution.
