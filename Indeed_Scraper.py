@@ -21,7 +21,7 @@ def main():
     wait = WebDriverWait(driver, 10)
 
     if location.lower() == 'remote':
-        distance = 'remote'
+        distance = '1000'
     else:
         distance = get_distance()
 
@@ -32,6 +32,9 @@ def main():
     driver.get(search_url.format(title, location, distance, salary, 0))
     print("Search URL:", search_url.format(title, location, distance, salary, 0))
     job_count = driver.find_element(By.CLASS_NAME, 'jobsearch-JobCountAndSortPane-jobCount').text
+    # Remove commas from job count string
+    job_count = job_count.replace(',', '')
+
     print("Job Count:", job_count)
     # Max number of pages for this search
     max_pages = math.ceil(int(job_count.split(' ')[0]) / 15)
