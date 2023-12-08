@@ -49,3 +49,4 @@ Before running the script, make sure you have the following installed:
 - Ensure that your internet connection is stable during execution.
 - Make sure the chromedriver.exe path is correctly set.
 - Adjust the script as needed for specific job search requirements.
+- keep in mind that indeed uses cloudflare protection services, so take care not to request too many items at once or your IP may get blocked.
