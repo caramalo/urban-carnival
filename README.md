@@ -41,6 +41,6 @@ Before running the script, make sure you have the following installed:
 4. Once completed, the script will generate an Excel file (output_jobs.xlsx) containing the scraped data.
 
 ## Notes
-Ensure that your internet connection is stable during execution.
-Make sure the chromedriver.exe path is correctly set.
-Adjust the script as needed for specific job search requirements.
+- **Ensure that your internet connection is stable during execution.**
+- **Make sure the chromedriver.exe path is correctly set.**
+- **Adjust the script as needed for specific job search requirements.**
